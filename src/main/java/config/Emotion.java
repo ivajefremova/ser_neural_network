@@ -1,5 +1,6 @@
 package config;
 
+// emotion labels used for classification
 public enum Emotion {
     HAPPY,
     SAD,

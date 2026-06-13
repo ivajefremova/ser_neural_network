@@ -7,7 +7,7 @@ public class Config {
 
     // training settings
     public static final double LEARNING_RATE = 0.01;
-    public static final int EPOCHS = 1000;      // how many times to loop over all training data
+    public static final int EPOCHS = 500;      // how many times to loop over all training data
 
     // data split
     public static final double TRAIN_SPLIT = 0.8;   // 80% training, 20% testing
