@@ -72,28 +72,42 @@ public class NeuralNetwork {
         return resultMatrix;
     }
 
+    //makes prediction on what emotion it is
+    public int predict(Matrix inputMatrix) {
+        Matrix emotionProbabilities = forward(inputMatrix);    //output of forward, each value is how confident the network is about that emotion
+
+        int predictedLabel = 0;
+        for (int i = 1; i < Config.OUTPUT_SIZE; i++) {
+            if (emotionProbabilities.get(0, i) > emotionProbabilities.get(0, predictedLabel)) {
+                predictedLabel = i;
+            }
+        }
+        return predictedLabel;       //what the network thinks is the correct answer to later be compared with label parameter in backward
+    }
+
+    //goes from output to input (right to left), this is the backward propagation
     public void backward(Matrix resultMatrix, int label) {
         Matrix whichEmotion = new Matrix(1, Config.OUTPUT_SIZE);    //which emotion is correct vector
         whichEmotion.set(0, label, 1.0);                      //set 1 to the correct one
 
         Matrix errorMatrix = resultMatrix.elementSubtract(whichEmotion);
 
-        Matrix gradient = lastHidden.transpose().mul(errorMatrix);  //same as weightsHiddenOutput (its gradient)
-        Matrix outputBiasGradient = errorMatrix;                                 //same as outputBias (its gradient), its just the error no multiplication
+        Matrix weightsHiddenOutput2 = lastHidden.transpose().mul(errorMatrix);  //same as weightsHiddenOutput (its gradient)
+        Matrix biasOutput2 = errorMatrix;                                 //same as biasOurput (its gradient), it's just the error no multiplication
 
         Matrix layer1Error = errorMatrix.mul(weightsHiddenOutput.transpose());      //back once more
 
         Matrix tanhDerivative = lastHidden.map(h -> 1.0 - h * h);       //how steep was the tanh curve at this point? to go even further back
         Matrix beforeTanh = layer1Error.elementMultiply(tanhDerivative);                 //rom squshed to initial
 
-        Matrix firstLayer = lastInput.transpose().mul(beforeTanh);   //final multiply layer (back to the first one)
-        Matrix secondLayer = beforeTanh;
+        Matrix weightsHiddenInput2 = lastInput.transpose().mul(beforeTanh);   //final multiply layer (back to the first one)
+        Matrix biasHidden2 = beforeTanh;
 
         //add learning rate so that it makes up for mistakes if we get something wrong
-        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(gradient.scale(Config.LEARNING_RATE));
-        biasOutput = biasOutput.elementSubtract(outputBiasGradient.scale(Config.LEARNING_RATE));
-        weightsHiddenInput  = weightsHiddenInput.elementSubtract(firstLayer.scale(Config.LEARNING_RATE));
-        biasHidden = biasHidden.elementSubtract(secondLayer.scale(Config.LEARNING_RATE));
+        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(weightsHiddenOutput2.scale(Config.LEARNING_RATE));
+        biasOutput = biasOutput.elementSubtract(biasOutput2.scale(Config.LEARNING_RATE));
+        weightsHiddenInput  = weightsHiddenInput.elementSubtract(weightsHiddenInput2.scale(Config.LEARNING_RATE));
+        biasHidden = biasHidden.elementSubtract(biasHidden2.scale(Config.LEARNING_RATE));
     }
 
 }
