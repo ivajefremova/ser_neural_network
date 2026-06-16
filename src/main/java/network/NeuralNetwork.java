@@ -3,11 +3,19 @@ package network;
 import config.Config;
 import math.Matrix;
 
+// inputMatrix        [1 × 40]   — one row, 40 MFCC features
+//  weightsHiddenInput [40 × 64]  — connects every input to every hidden neuron
+//  biasHidden         [1 × 64]   — one bias per hidden neuron
+//  weightsHiddenOutput[64 × 6]   — connects every hidden neuron to every emotion
+//  biasOutput         [1 × 6]    — one bias per emotion output
+
 public class NeuralNetwork {
     private Matrix weightsHiddenInput;
     private Matrix weightsHiddenOutput;
     private Matrix biasHidden;
     private Matrix biasOutput;
+    private Matrix lastInput;
+    private Matrix lastHidden;
 
     //initializes weights and biases randomly
     public NeuralNetwork(){
@@ -26,16 +34,19 @@ public class NeuralNetwork {
 
     //returns output layer of neural network
     public Matrix forward(Matrix inputMatrix) {
+        this.lastInput = inputMatrix;
 
         // hidden layer
         Matrix hiddenLayer = inputMatrix.mul(weightsHiddenInput);  //internal layer is gotten by multiplying input and hidden input matrix
         hiddenLayer = hiddenLayer.elementAdd(biasHidden);      //add the bias for calculation
-        hiddenLayer = hiddenLayer.map(x -> Math.tanh(x));
+        hiddenLayer = hiddenLayer.map(x -> Math.tanh(x));      //squishes from -1 to 1
+
+        this.lastHidden = hiddenLayer;
 
         // output layer
         Matrix outputLayer = hiddenLayer.mul(weightsHiddenOutput);   //get the output layer by matrix multiplication of hiddenlayer with hidden output
-        outputLayer = outputLayer.elementAdd(biasOutput);
-        outputLayer = softmax(outputLayer);
+        outputLayer = outputLayer.elementAdd(biasOutput);  //add the bias to the output
+        outputLayer = softmax(outputLayer);   //makes probability vector, all elements sum up to 1
 
         return outputLayer;
     }
@@ -60,4 +71,29 @@ public class NeuralNetwork {
 
         return resultMatrix;
     }
+
+    public void backward(Matrix resultMatrix, int label) {
+        Matrix whichEmotion = new Matrix(1, Config.OUTPUT_SIZE);    //which emotion is correct vector
+        whichEmotion.set(0, label, 1.0);                      //set 1 to the correct one
+
+        Matrix errorMatrix = resultMatrix.elementSubtract(whichEmotion);
+
+        Matrix gradient = lastHidden.transpose().mul(errorMatrix);  //same as weightsHiddenOutput (its gradient)
+        Matrix outputBiasGradient = errorMatrix;                                 //same as outputBias (its gradient), its just the error no multiplication
+
+        Matrix layer1Error = errorMatrix.mul(weightsHiddenOutput.transpose());      //back once more
+
+        Matrix tanhDerivative = lastHidden.map(h -> 1.0 - h * h);       //how steep was the tanh curve at this point? to go even further back
+        Matrix beforeTanh = layer1Error.elementMultiply(tanhDerivative);                 //rom squshed to initial
+
+        Matrix firstLayer = lastInput.transpose().mul(beforeTanh);   //final multiply layer (back to the first one)
+        Matrix secondLayer = beforeTanh;
+
+        //add learning rate so that it makes up for mistakes if we get something wrong
+        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(gradient.scale(Config.LEARNING_RATE));
+        biasOutput = biasOutput.elementSubtract(outputBiasGradient.scale(Config.LEARNING_RATE));
+        weightsHiddenInput  = weightsHiddenInput.elementSubtract(firstLayer.scale(Config.LEARNING_RATE));
+        biasHidden = biasHidden.elementSubtract(secondLayer.scale(Config.LEARNING_RATE));
+    }
+
 }
