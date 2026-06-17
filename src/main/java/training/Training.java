@@ -5,45 +5,34 @@ import math.Matrix;
 import config.Config;
 import network.NeuralNetwork;
 
-
-
-
 import java.util.Collections;
 import java.util.List;
 
 public class Training {
-    public static Matrix tomatrix(double[] vector){
-        Matrix mat = new Matrix(1, vector.length);
-        for (int i = 0; i< vector.length; i++){
-            mat.set(0, i, vector[i]);
-        }
-        return mat;
-    }
 
-    public static void train(NeuralNetwork network, List<FeatureVector> training_data){
+    public static void train(NeuralNetwork network, List<FeatureVector> trainingData, List<FeatureVector> testData) {
 
-        for (int epoch= 0; epoch < Config.EPOCHS; epoch++){
+        double bestTestAccuracy = 0;
+        Matrix bestW1 = null, bestW2 = null, bestB1 = null, bestB2 = null;
 
-            Collections.shuffle(training_data);
+        for (int epoch = 0; epoch < Config.EPOCHS; epoch++) {
+
+            Collections.shuffle(trainingData);
 
             int correct = 0;
             double totalLoss = 0;
 
-            for(FeatureVector fv: training_data){
-                Matrix input = tomatrix(fv.getFeatures());
+            for (FeatureVector fv : trainingData) {
+                Matrix input = toMatrix(fv.getFeatures());
                 int label = fv.getLabel().ordinal();
 
                 Matrix output = network.forward(input);
 
                 int predicted = 0;
-                for(int i =0; i < Config.OUTPUT_SIZE; i++){
-                    if (output.get(0, i)> output.get(0, predicted)){
-                        predicted = i;
-                    }
+                for (int i = 0; i < Config.OUTPUT_SIZE; i++) {
+                    if (output.get(0, i) > output.get(0, predicted)) predicted = i;
                 }
-                if ( predicted == label){
-                    correct++;
-                }
+                if (predicted == label) correct++;
 
                 double prob = output.get(0, label);
                 totalLoss += -Math.log(prob + 1e-10);
@@ -51,12 +40,54 @@ public class Training {
                 network.backward(output, label);
             }
 
-            double accuracy = (double) correct / training_data.size();
-            double avgLoss = totalLoss / training_data.size();
+            double trainAccuracy = (double) correct / trainingData.size();
+            double avgLoss = totalLoss / trainingData.size();
 
-            System.out.printf("Epoch %d | Loss: %.4f | Accuracy: %.2f%%%n",
-                    epoch, avgLoss, accuracy * 100);
+            // check test accuracy every 5 epochs
+            if (epoch % 1 == 0 || epoch == Config.EPOCHS - 1) {
+                double testAccuracy = quickEvaluate(network, testData);
+
+                System.out.printf("Epoch %d | Loss: %.4f | Train: %.2f%% | Test: %.2f%%%n",
+                        epoch, avgLoss, trainAccuracy * 100, testAccuracy * 100);
+
+                if (testAccuracy > bestTestAccuracy) {
+                    bestTestAccuracy = testAccuracy;
+                    bestW1 = network.getWeightsHiddenInput().copy();
+                    bestW2 = network.getWeightsHiddenOutput().copy();
+                    bestB1 = network.getBiasHidden().copy();
+                    bestB2 = network.getBiasOutput().copy();
+                }
+            } else {
+                System.out.printf("Epoch %d | Loss: %.4f | Train: %.2f%%%n",
+                        epoch, avgLoss, trainAccuracy * 100);
+            }
+        }
+
+        // restore the best version seen during training
+        if (bestW1 != null) {
+            network.setWeightsHiddenInput(bestW1);
+            network.setWeightsHiddenOutput(bestW2);
+            network.setBiasHidden(bestB1);
+            network.setBiasOutput(bestB2);
+            System.out.printf("%nRestored best model — test accuracy was %.2f%%%n", bestTestAccuracy * 100);
         }
     }
 
+    private static double quickEvaluate(NeuralNetwork network, List<FeatureVector> testData) {
+        int correct = 0;
+        for (FeatureVector fv : testData) {
+            Matrix input = toMatrix(fv.getFeatures());
+            int predicted = network.predict(input);
+            if (predicted == fv.getLabel().ordinal()) correct++;
+        }
+        return (double) correct / testData.size();
+    }
+
+    private static Matrix toMatrix(double[] vector) {
+        Matrix mat = new Matrix(1, vector.length);
+        for (int i = 0; i < vector.length; i++) {
+            mat.set(0, i, vector[i]);
+        }
+        return mat;
+    }
 }

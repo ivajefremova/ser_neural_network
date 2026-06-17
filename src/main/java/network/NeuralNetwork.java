@@ -3,8 +3,8 @@ package network;
 import config.Config;
 import math.Matrix;
 
-// inputMatrix        [1 × 40]   — one row, 40 MFCC features
-//  weightsHiddenInput [40 × 64]  — connects every input to every hidden neuron
+// inputMatrix        [1 × 26]   — one row, 26 MFCC features (13 means + 13 stds)
+// weightsHiddenInput [26 × 64]  — connects every input to every hidden neuron
 //  biasHidden         [1 × 64]   — one bias per hidden neuron
 //  weightsHiddenOutput[64 × 6]   — connects every hidden neuron to every emotion
 //  biasOutput         [1 × 6]    — one bias per emotion output
