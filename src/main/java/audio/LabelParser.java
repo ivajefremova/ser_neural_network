@@ -16,7 +16,7 @@ public class LabelParser {
             case "HAP": return Emotion.HAPPY;
             case "NEU": return Emotion.NEUTRAL;
             case "SAD": return Emotion.SAD;
-            default: return null; // unknown code
+            default: return null;
         }
     }
     public static void main(String[] args){

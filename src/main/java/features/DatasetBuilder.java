@@ -2,6 +2,7 @@ package features;
 
 import audio.AudioLoader;
 import audio.LabeledAudio;
+import config.Config;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -39,9 +40,9 @@ public class DatasetBuilder {
                 System.out.println("Processed " + count + "/" + dataset.size());
             }
         }
-        saveToCSV(vectors, "/Users/oskar/Documents/NeuroNetProject/ser_neural_network/src/main/java/features/features.csv");
+        saveToCSV(vectors, Config.FEATURES_CSV);
     }
     public static void main(String[] args) throws Exception{
-        dataSave("/Users/oskar/Documents/NeuroNetProject/Data/AudioWAV");
+        dataSave(Config.AUDIO_FOLDER);
     }
 }

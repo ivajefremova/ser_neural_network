@@ -3,11 +3,11 @@ package network;
 import config.Config;
 import math.Matrix;
 
-// inputMatrix        [1 × 40]   — one row, 40 MFCC features
-//  weightsHiddenInput [40 × 64]  — connects every input to every hidden neuron
-//  biasHidden         [1 × 64]   — one bias per hidden neuron
-//  weightsHiddenOutput[64 × 6]   — connects every hidden neuron to every emotion
-//  biasOutput         [1 × 6]    — one bias per emotion output
+// inputMatrix        — one row, 26 MFCC features
+//  weightsHiddenInput   — connects every input to every hidden neuron
+//  biasHidden          — one bias per hidden neuron
+//  weightsHiddenOutput — connects every hidden neuron to every emotion
+//  biasOutput          — one bias per emotion output
 
 public class NeuralNetwork {
     private Matrix weightsHiddenInput;
@@ -69,15 +69,21 @@ public class NeuralNetwork {
     //e^(0)   =  1.0
     //e^(5)   =  148.4
     private Matrix softmax(Matrix inputMatrix){
-        Matrix resultMatrix = new Matrix(1, Config.OUTPUT_SIZE);    //makes a new horizontal vector
-        double sum = 0.0;
+        Matrix resultMatrix = new Matrix(1, Config.OUTPUT_SIZE);
 
+        // subtract max for numerical stability (prevents exp overflow)
+        double max = inputMatrix.get(0, 0);
+        for (int i = 1; i < Config.OUTPUT_SIZE; i++) {
+            if (inputMatrix.get(0, i) > max) max = inputMatrix.get(0, i);
+        }
+
+        double sum = 0.0;
         for (int i = 0; i < Config.OUTPUT_SIZE; i++) {
-            sum += Math.exp(inputMatrix.get(0, i));       //get is from matrix class
+            sum += Math.exp(inputMatrix.get(0, i) - max);
         }
 
         for (int i = 0; i < Config.OUTPUT_SIZE; i++) {
-            resultMatrix.set(0, i, Math.exp(inputMatrix.get(0, i)) / sum);      //divide each element by the sum
+            resultMatrix.set(0, i, Math.exp(inputMatrix.get(0, i) - max) / sum);
         }
 
         return resultMatrix;

@@ -23,6 +23,7 @@ public class AudioLoader {
                 String name = f.getName();
                 String absPath = f.getAbsolutePath();
                 Emotion emo = LabelParser.parse(name);
+                if (emo == null) continue;
                 LabeledAudio labAudio = new LabeledAudio(absPath, emo);
                 listLabAudio.add(labAudio);
             }
@@ -34,7 +35,7 @@ public class AudioLoader {
         List<LabeledAudio> dataset = loadDataset(Config.AUDIO_FOLDER);
         System.out.println("Total files loaded: " + dataset.size());
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < Math.min(5, dataset.size()); i++) {
             System.out.println(dataset.get(i).getFilePath() + " → " + dataset.get(i).getLabel());
         }
     }

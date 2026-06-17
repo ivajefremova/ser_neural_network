@@ -2,6 +2,7 @@ package audio;
 
 //Splits the data into two sets (training and testing) in 80:20 propotion, in a way that the same voice actor will never appear in both
 
+import config.Config;
 import java.io.File;
 import java.util.*;
 
@@ -17,7 +18,7 @@ public class DatasetSplitter {
         }
         Collections.shuffle(actorList);
 
-        int splitPoint = (int)(actorList.size() * 0.8);
+        int splitPoint = (int)(actorList.size() * Config.TRAIN_SPLIT);
 
         Set<String> trainActors = new HashSet<>(actorList.subList(0, splitPoint));
         Set<String> testActors  = new HashSet<>(actorList.subList(splitPoint, actorList.size()));

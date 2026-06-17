@@ -4,7 +4,7 @@ public class Config {
 
     // audio
     public static final int SAMPLE_RATE = 16000;
-    public static final String AUDIO_FOLDER = "/Users/oskar/Documents/NeuroNetProject/Data/AudioWAV";
+    public static final String AUDIO_FOLDER = "src/main/resources/data/AudioWAV";
 
     // network dimensions
     public static final int INPUT_SIZE = 26;    // 13 MFCC means + 13 MFCC stds

@@ -152,7 +152,7 @@ No machine learning libraries (e.g. Deeplearning4j) are used. All neural network
 ## Setup and Run
 
 ### Prerequisites
-- Java 25 or higher
+- Java 26 or higher
 - Maven
 
 ### Clone and build

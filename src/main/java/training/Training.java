@@ -8,6 +8,7 @@ import network.NeuralNetwork;
 
 
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,15 +22,16 @@ public class Training {
     }
 
     public static void train(NeuralNetwork network, List<FeatureVector> training_data){
+        List<FeatureVector> data = new ArrayList<>(training_data);
 
         for (int epoch= 0; epoch < Config.EPOCHS; epoch++){
 
-            Collections.shuffle(training_data);
+            Collections.shuffle(data);
 
             int correct = 0;
             double totalLoss = 0;
 
-            for(FeatureVector fv: training_data){
+            for(FeatureVector fv: data){
                 Matrix input = tomatrix(fv.getFeatures());
                 int label = fv.getLabel().ordinal();
 
@@ -51,8 +53,8 @@ public class Training {
                 network.backward(output, label);
             }
 
-            double accuracy = (double) correct / training_data.size();
-            double avgLoss = totalLoss / training_data.size();
+            double accuracy = (double) correct / data.size();
+            double avgLoss = totalLoss / data.size();
 
             System.out.printf("Epoch %d | Loss: %.4f | Accuracy: %.2f%%%n",
                     epoch, avgLoss, accuracy * 100);

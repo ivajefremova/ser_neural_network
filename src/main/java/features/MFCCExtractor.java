@@ -1,5 +1,6 @@
 package features;
 
+import config.Config;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.io.File;
@@ -12,9 +13,6 @@ import org.apache.commons.math3.transform.DctNormalization;
 import java.util.Arrays;
 
 public class MFCCExtractor {
-
-
-    private static final int SAMPLE_RATE = 16000;
     private static final int FRAME_SIZE = 512;
     private static final int HOP_SIZE = 256;
     private static final int NUM_FILTERS = 33;
@@ -87,7 +85,7 @@ public class MFCCExtractor {
         double[] filterbank = new double[numFilters];
 
         double melMin = hzToMel(0);
-        double melMax = hzToMel(SAMPLE_RATE / 2.0);
+        double melMax = hzToMel(Config.SAMPLE_RATE / 2.0);
 
         double[] melPoints = new double[numFilters + 2];
         for (int i = 0; i < melPoints.length; i++) {
@@ -97,7 +95,7 @@ public class MFCCExtractor {
         int[] bins = new int[numFilters + 2];
         for (int i = 0; i < melPoints.length; i++) {
             double hz = melToHz(melPoints[i]);
-            bins[i] = (int)((FRAME_SIZE + 1) * hz / SAMPLE_RATE);
+            bins[i] = (int)((FRAME_SIZE + 1) * hz / Config.SAMPLE_RATE);
         }
 
         for (int m = 1; m <= numFilters; m++) {
