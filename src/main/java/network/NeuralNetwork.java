@@ -3,41 +3,56 @@ package network;
 import config.Config;
 import math.Matrix;
 
-// inputMatrix        [1 × 26]   — one row, 26 MFCC features (13 means + 13 stds)
-// weightsHiddenInput [26 × 64]  — connects every input to every hidden neuron
-//  biasHidden         [1 × 64]   — one bias per hidden neuron
-//  weightsHiddenOutput[64 × 6]   — connects every hidden neuron to every emotion
-//  biasOutput         [1 × 6]    — one bias per emotion output
+// inputMatrix          [1 × 31]   — one row, 31 features
+// weightsInputHidden1  [31 × 64]  — connects every input to every neuron in hidden layer 1
+// biasHidden1          [1 × 64]   — one bias per neuron in hidden layer 1
+// weightsHidden1Hidden2[64 × 32]  — connects every neuron in hidden layer 1 to hidden layer 2
+// biasHidden2          [1 × 32]   — one bias per neuron in hidden layer 2
+// weightsHidden2Output [32 × 6]   — connects every neuron in hidden layer 2 to every emotion
+// biasOutput           [1 × 6]    — one bias per emotion output
 
 public class NeuralNetwork {
-    private Matrix weightsHiddenInput;
-    private Matrix weightsHiddenOutput;
-    private Matrix biasHidden;
+    private Matrix weightsInputHidden1;
+    private Matrix weightsHidden1Hidden2;
+    private Matrix weightsHidden2Output;
+    private Matrix biasHidden1;
+    private Matrix biasHidden2;
     private Matrix biasOutput;
     private Matrix lastInput;
-    private Matrix lastHidden;
+    private Matrix lastHidden1;
+    private Matrix lastHidden2;
 
     //getters and setters for model saver
-    public Matrix getWeightsHiddenInput()  { return weightsHiddenInput; }
-    public Matrix getWeightsHiddenOutput() { return weightsHiddenOutput; }
-    public Matrix getBiasHidden()          { return biasHidden; }
-    public Matrix getBiasOutput()          { return biasOutput; }
+    public Matrix getWeightsInputHidden1()   { return weightsInputHidden1; }
+    public Matrix getWeightsHidden1Hidden2() { return weightsHidden1Hidden2; }
+    public Matrix getWeightsHidden2Output()  { return weightsHidden2Output; }
+    public Matrix getBiasHidden1()           { return biasHidden1; }
+    public Matrix getBiasHidden2()           { return biasHidden2; }
+    public Matrix getBiasOutput()            { return biasOutput; }
 
-    public void setWeightsHiddenInput(Matrix m)  { weightsHiddenInput = m; }
-    public void setWeightsHiddenOutput(Matrix m) { weightsHiddenOutput = m; }
-    public void setBiasHidden(Matrix m)          { biasHidden = m; }
-    public void setBiasOutput(Matrix m)          { biasOutput = m; }
+    public void setWeightsInputHidden1(Matrix m)   { weightsInputHidden1 = m; }
+    public void setWeightsHidden1Hidden2(Matrix m) { weightsHidden1Hidden2 = m; }
+    public void setWeightsHidden2Output(Matrix m)  { weightsHidden2Output = m; }
+    public void setBiasHidden1(Matrix m)           { biasHidden1 = m; }
+    public void setBiasHidden2(Matrix m)           { biasHidden2 = m; }
+    public void setBiasOutput(Matrix m)            { biasOutput = m; }
 
     //initializes weights and biases randomly
-    public NeuralNetwork(){
-        weightsHiddenInput = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE);
-        weightsHiddenInput.randomize(-0.5, 0.5);
+    public NeuralNetwork() {
+        weightsInputHidden1 = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE_1);
+        weightsInputHidden1.randomize(-0.5, 0.5);
 
-        weightsHiddenOutput = new Matrix(Config.HIDDEN_SIZE, Config.OUTPUT_SIZE);
-        weightsHiddenOutput.randomize(-0.5, 0.5);
+        weightsHidden1Hidden2 = new Matrix(Config.HIDDEN_SIZE_1, Config.HIDDEN_SIZE_2);
+        weightsHidden1Hidden2.randomize(-0.5, 0.5);
 
-        biasHidden = new Matrix(1, Config.HIDDEN_SIZE);
-        biasHidden.randomize(-0.5, 0.5);
+        weightsHidden2Output = new Matrix(Config.HIDDEN_SIZE_2, Config.OUTPUT_SIZE);
+        weightsHidden2Output.randomize(-0.5, 0.5);
+
+        biasHidden1 = new Matrix(1, Config.HIDDEN_SIZE_1);
+        biasHidden1.randomize(-0.5, 0.5);
+
+        biasHidden2 = new Matrix(1, Config.HIDDEN_SIZE_2);
+        biasHidden2.randomize(-0.5, 0.5);
 
         biasOutput = new Matrix(1, Config.OUTPUT_SIZE);
         biasOutput.randomize(-0.5, 0.5);
@@ -45,35 +60,37 @@ public class NeuralNetwork {
 
     //returns output layer of neural network
     public Matrix forward(Matrix inputMatrix) {
-        this.lastInput = inputMatrix;
+        lastInput = inputMatrix;
 
-        // hidden layer
-        Matrix hiddenLayer = inputMatrix.mul(weightsHiddenInput);  //internal layer is gotten by multiplying input and hidden input matrix
-        hiddenLayer = hiddenLayer.elementAdd(biasHidden);      //add the bias for calculation
-        hiddenLayer = hiddenLayer.map(x -> Math.tanh(x));      //squishes from -1 to 1
+        // hidden layer 1
+        lastHidden1 = inputMatrix.mul(weightsInputHidden1);
+        lastHidden1 = lastHidden1.elementAdd(biasHidden1);
+        lastHidden1 = lastHidden1.map(x -> Math.tanh(x));      //squishes from -1 to 1
 
-        this.lastHidden = hiddenLayer;
+        // hidden layer 2
+        lastHidden2 = lastHidden1.mul(weightsHidden1Hidden2);
+        lastHidden2 = lastHidden2.elementAdd(biasHidden2);
+        lastHidden2 = lastHidden2.map(x -> Math.tanh(x));      //squishes from -1 to 1
 
         // output layer
-        Matrix outputLayer = hiddenLayer.mul(weightsHiddenOutput);   //get the output layer by matrix multiplication of hiddenlayer with hidden output
-        outputLayer = outputLayer.elementAdd(biasOutput);  //add the bias to the output
+        Matrix outputLayer = lastHidden2.mul(weightsHidden2Output);
+        outputLayer = outputLayer.elementAdd(biasOutput);
         outputLayer = softmax(outputLayer);   //makes probability vector, all elements sum up to 1
 
         return outputLayer;
     }
 
-
     //takes 6 raw numbers and convert them into 6 probabilities that add up to 1
-    //does that through the e^x function because it always oitputs a positive number no matter what
+    //does that through the e^x function because it always outputs a positive number no matter what
     //e^(-5)  =  0.0067
     //e^(0)   =  1.0
     //e^(5)   =  148.4
-    private Matrix softmax(Matrix inputMatrix){
+    private Matrix softmax(Matrix inputMatrix) {
         Matrix resultMatrix = new Matrix(1, Config.OUTPUT_SIZE);    //makes a new horizontal vector
         double sum = 0.0;
 
         for (int i = 0; i < Config.OUTPUT_SIZE; i++) {
-            sum += Math.exp(inputMatrix.get(0, i));       //get is from matrix class
+            sum += Math.exp(inputMatrix.get(0, i));
         }
 
         for (int i = 0; i < Config.OUTPUT_SIZE; i++) {
@@ -101,24 +118,36 @@ public class NeuralNetwork {
         Matrix whichEmotion = new Matrix(1, Config.OUTPUT_SIZE);    //which emotion is correct vector
         whichEmotion.set(0, label, 1.0);                      //set 1 to the correct one
 
-        Matrix errorMatrix = resultMatrix.elementSubtract(whichEmotion);
+        Matrix outputError = resultMatrix.elementSubtract(whichEmotion);
 
-        Matrix weightsHiddenOutput2 = lastHidden.transpose().mul(errorMatrix);  //same as weightsHiddenOutput (its gradient)
-        Matrix biasOutput2 = errorMatrix;                                 //same as biasOurput (its gradient), it's just the error no multiplication
+        // gradients at weightsHidden2Output
+        Matrix weightsHidden2Output2 = lastHidden2.transpose().mul(outputError);
+        Matrix biasOutput2 = outputError;
 
-        Matrix layer1Error = errorMatrix.mul(weightsHiddenOutput.transpose());      //back once more
+        // propagate error back to hidden layer 2
+        Matrix hidden2Error = outputError.mul(weightsHidden2Output.transpose());
+        Matrix tanhDerivativeHidden2 = lastHidden2.map(h -> 1.0 - h * h);   //how steep was the tanh curve at this point
+        Matrix deltaHidden2 = hidden2Error.elementMultiply(tanhDerivativeHidden2);
 
-        Matrix tanhDerivative = lastHidden.map(h -> 1.0 - h * h);       //how steep was the tanh curve at this point? to go even further back
-        Matrix beforeTanh = layer1Error.elementMultiply(tanhDerivative);                 //rom squshed to initial
+        // gradients at weightsHidden1Hidden2
+        Matrix weightsHidden1Hidden22 = lastHidden1.transpose().mul(deltaHidden2);
+        Matrix biasHidden22 = deltaHidden2;
 
-        Matrix weightsHiddenInput2 = lastInput.transpose().mul(beforeTanh);   //final multiply layer (back to the first one)
-        Matrix biasHidden2 = beforeTanh;
+        // propagate error back to hidden layer 1
+        Matrix hidden1Error = deltaHidden2.mul(weightsHidden1Hidden2.transpose());
+        Matrix tanhDerivativeHidden1 = lastHidden1.map(h -> 1.0 - h * h);   //how steep was the tanh curve at this point
+        Matrix deltaHidden1 = hidden1Error.elementMultiply(tanhDerivativeHidden1);
+
+        // gradients at weightsInputHidden1
+        Matrix weightsInputHidden12 = lastInput.transpose().mul(deltaHidden1);
+        Matrix biasHidden12 = deltaHidden1;
 
         //add learning rate so that it makes up for mistakes if we get something wrong
-        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(weightsHiddenOutput2.scale(Config.LEARNING_RATE));
-        biasOutput = biasOutput.elementSubtract(biasOutput2.scale(Config.LEARNING_RATE));
-        weightsHiddenInput  = weightsHiddenInput.elementSubtract(weightsHiddenInput2.scale(Config.LEARNING_RATE));
-        biasHidden = biasHidden.elementSubtract(biasHidden2.scale(Config.LEARNING_RATE));
+        weightsHidden2Output  = weightsHidden2Output.elementSubtract(weightsHidden2Output2.scale(Config.LEARNING_RATE));
+        biasOutput            = biasOutput.elementSubtract(biasOutput2.scale(Config.LEARNING_RATE));
+        weightsHidden1Hidden2 = weightsHidden1Hidden2.elementSubtract(weightsHidden1Hidden22.scale(Config.LEARNING_RATE));
+        biasHidden2           = biasHidden2.elementSubtract(biasHidden22.scale(Config.LEARNING_RATE));
+        weightsInputHidden1   = weightsInputHidden1.elementSubtract(weightsInputHidden12.scale(Config.LEARNING_RATE));
+        biasHidden1           = biasHidden1.elementSubtract(biasHidden12.scale(Config.LEARNING_RATE));
     }
-
 }

@@ -7,8 +7,9 @@ public class Config {
     public static final String AUDIO_FOLDER = "src/main/resources/data/AudioWAV";
 
     // network dimensions
-    public static final int INPUT_SIZE = 31;    // 13 MFCC means + 13 MFCC stds
-    public static final int HIDDEN_SIZE = 64;   // neurons in hidden layer
+    public static final int INPUT_SIZE = 31;
+    public static final int HIDDEN_SIZE_1 = 64;
+    public static final int HIDDEN_SIZE_2 = 32;
     public static final int OUTPUT_SIZE = 6;    // one per emotion
 
     // training settings
