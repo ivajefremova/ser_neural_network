@@ -20,5 +20,6 @@ public class Config {
 
     // file paths
     public static final String FEATURES_CSV = "features/features.csv";
-    public static final String MODEL_PATH = "src/main/resources/model.txt";
+    public static final String MODEL_PATH    = "models/model.txt";
+    public static final String NORM_PATH     = "models/normalizer.txt";
 }

@@ -1,6 +1,9 @@
 package features;
 
 import config.Config;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,5 +48,26 @@ public class FeatureNormalizer {
             result.add(new FeatureVector(normed, fv.getLabel()));
         }
         return result;
+    }
+
+    public void save(String path) throws IOException {
+        Files.createDirectories(Paths.get(path).getParent());
+        try (BufferedWriter w = new BufferedWriter(new FileWriter(path))) {
+            w.write(means.length + "\n");
+            for (double m : means) w.write(m + "\n");
+            for (double s : stds)  w.write(s + "\n");
+        }
+    }
+
+    public static FeatureNormalizer load(String path) throws IOException {
+        FeatureNormalizer fn = new FeatureNormalizer();
+        try (BufferedReader r = new BufferedReader(new FileReader(path))) {
+            int size = Integer.parseInt(r.readLine().trim());
+            fn.means = new double[size];
+            fn.stds  = new double[size];
+            for (int i = 0; i < size; i++) fn.means[i] = Double.parseDouble(r.readLine().trim());
+            for (int i = 0; i < size; i++) fn.stds[i]  = Double.parseDouble(r.readLine().trim());
+        }
+        return fn;
     }
 }

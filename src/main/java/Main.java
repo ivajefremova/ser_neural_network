@@ -64,9 +64,11 @@ public class Main {
         System.out.println("\n=== FULL TEST SET EVALUATION ===");
         Evaluator.evaluate(network, testNorm);
 
-        // 10 - save model
-        ModelSaver.save(network, "models/model.txt");
-        System.out.println("\nModel saved.");
+        // 10 - save model and normalizer
+        ModelSaver.save(network, Config.MODEL_PATH);
+        normalizer.save(Config.NORM_PATH);
+        System.out.println("\nModel saved to " + Config.MODEL_PATH);
+        System.out.println("Normalizer saved to " + Config.NORM_PATH);
     }
 
     private static List<FeatureVector> pickDemoSamples(List<FeatureVector> testData) {
