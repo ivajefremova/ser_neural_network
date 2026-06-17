@@ -1,5 +1,6 @@
 package audio;
 
+import config.Config;
 import config.Emotion;
 import java.io.File;
 import java.util.List;
@@ -30,7 +31,7 @@ public class AudioLoader {
     }
 
     public static void main(String[] args) {
-        List<LabeledAudio> dataset = loadDataset("/Users/oskar/Documents/NeuroNetProject/Data/AudioWAV");
+        List<LabeledAudio> dataset = loadDataset(Config.AUDIO_FOLDER);
         System.out.println("Total files loaded: " + dataset.size());
 
         for (int i = 0; i < 5; i++) {

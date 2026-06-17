@@ -30,17 +30,17 @@ public class NeuralNetwork {
 
     //initializes weights and biases randomly
     public NeuralNetwork(){
-    weightsHiddenInput = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE);
-    weightsHiddenInput.randomize(-0.5, 0.5);
+        weightsHiddenInput = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE);
+        weightsHiddenInput.randomize(-0.5, 0.5);
 
-    weightsHiddenOutput = new Matrix(Config.HIDDEN_SIZE, Config.OUTPUT_SIZE);
-    weightsHiddenOutput.randomize(-0.5, 0.5);
+        weightsHiddenOutput = new Matrix(Config.HIDDEN_SIZE, Config.OUTPUT_SIZE);
+        weightsHiddenOutput.randomize(-0.5, 0.5);
 
-    biasHidden = new Matrix(1, Config.HIDDEN_SIZE);
-    biasHidden.randomize(-0.5, 0.5);
+        biasHidden = new Matrix(1, Config.HIDDEN_SIZE);
+        biasHidden.randomize(-0.5, 0.5);
 
-    biasOutput = new Matrix(1, Config.OUTPUT_SIZE);
-    biasOutput.randomize(-0.5, 0.5);
+        biasOutput = new Matrix(1, Config.OUTPUT_SIZE);
+        biasOutput.randomize(-0.5, 0.5);
     }
 
     //returns output layer of neural network
