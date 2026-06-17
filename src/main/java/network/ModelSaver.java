@@ -2,12 +2,14 @@ package network;
 
 import math.Matrix;
 
-import java.io.*;      //used module for file writing
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class ModelSaver {
 
-    //saves the network
     public static void save(NeuralNetwork nn, String path) throws IOException {
+        Files.createDirectories(Paths.get(path).getParent());
         BufferedWriter writer = new BufferedWriter(new FileWriter(path));
 
         writeMatrix(writer, "weightsHiddenInput",  nn.getWeightsHiddenInput());
