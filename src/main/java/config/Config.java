@@ -8,12 +8,13 @@ public class Config {
 
     // network dimensions
     public static final int INPUT_SIZE = 26;    // 13 MFCC means + 13 MFCC stds
-    public static final int HIDDEN_SIZE = 64;   // neurons in hidden layer
+    public static final int HIDDEN_SIZE = 128;   // neurons in hidden layer
     public static final int OUTPUT_SIZE = 6;    // one per emotion
 
     // training settings
     public static final double LEARNING_RATE = 0.01;
-    public static final int EPOCHS = 100;
+    public static final int EPOCHS = 200;
+    public static final double L2_LAMBDA = 0.001;  // L2 regularization — prevents overfitting
 
     // data split
     public static final double TRAIN_SPLIT = 0.8;   // 80% training, 20% testing

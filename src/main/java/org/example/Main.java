@@ -14,8 +14,14 @@ import network.ModelSaver;
 import network.NeuralNetwork;
 import training.Training;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -50,21 +56,20 @@ public class Main {
         List<FeatureVector> trainNorm = normalizer.normalizeAll(trainFeatures);
         List<FeatureVector> testNorm  = normalizer.normalizeAll(testFeatures);
 
-        // 4. train
+        // train
         System.out.println("\nTraining for " + Config.EPOCHS + " epochs...");
         NeuralNetwork network = new NeuralNetwork();
         Training.train(network, trainNorm);
 
-        // 5. save model
+        // save model
         ModelSaver.save(network, Config.MODEL_PATH);
         System.out.println("\nModel saved to " + Config.MODEL_PATH);
 
-        // 6. evaluate on full test set
+        // evaluate on full test set
         System.out.println("\n--- Test Set Evaluation ---");
         Evaluator.evaluate(network, testNorm);
 
-        // 7. single-file demo prediction
-        // use args[0] if provided, otherwise pick the first file from the test set
+        // single-file demo prediction
         System.out.println("\n--- Single File Prediction ---");
         String demoPath;
         Emotion trueLabel = null;
@@ -100,10 +105,51 @@ public class Main {
             System.out.printf("  %-10s %5.1f%%  %s%n", e.name(), pct, bar);
         }
 
-        System.out.println("\nPredicted:  " + Emotion.findEmotion(predicted).name());
+        String predictedName = Emotion.findEmotion(predicted).name();
+        System.out.println("\nPredicted:  " + predictedName);
         if (trueLabel != null) {
             String correct = trueLabel.ordinal() == predicted ? "CORRECT" : "WRONG";
             System.out.println("True label: " + trueLabel.name() + "  →  " + correct);
         }
+
+        // play the audio clip, then announce the result with text-to-speech
+        System.out.println("\nPlaying audio...");
+        try {
+            playWav(demoPath);
+        } catch (Exception e) {
+            System.out.println("Could not play audio: " + e.getMessage());
+        }
+
+        try {
+            String announcement = "The detected emotion is " + predictedName.toLowerCase();
+            speak(announcement);
+        } catch (Exception e) {
+            System.out.println("Could not speak: " + e.getMessage());
+        }
+    }
+
+    private static void playWav(String filePath) throws Exception {
+        AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File(filePath));
+        Clip clip = AudioSystem.getClip();
+        clip.open(audioIn);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        clip.addLineListener(event -> {
+            if (event.getType() == LineEvent.Type.STOP) {
+                latch.countDown();
+            }
+        });
+
+        clip.start();
+        latch.await();
+        clip.close();
+        audioIn.close();
+    }
+
+    // uses macOS built-in 'say' command for text-to-speech
+    private static void speak(String text) throws Exception {
+        System.out.println("Announcing: \"" + text + "\"");
+        Process p = Runtime.getRuntime().exec(new String[]{"say", text});
+        p.waitFor();
     }
 }

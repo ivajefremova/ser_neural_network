@@ -120,10 +120,12 @@ public class NeuralNetwork {
         Matrix weightsHiddenInput2 = lastInput.transpose().mul(beforeTanh);   //final multiply layer (back to the first one)
         Matrix biasHidden2 = beforeTanh;
 
-        //add learning rate so that it makes up for mistakes if we get something wrong
-        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(weightsHiddenOutput2.scale(Config.LEARNING_RATE));
+        // gradient descent + L2 regularization (weight decay prevents memorization)
+        weightsHiddenOutput = weightsHiddenOutput.elementSubtract(weightsHiddenOutput2.scale(Config.LEARNING_RATE))
+                                                 .elementSubtract(weightsHiddenOutput.scale(Config.LEARNING_RATE * Config.L2_LAMBDA));
         biasOutput = biasOutput.elementSubtract(biasOutput2.scale(Config.LEARNING_RATE));
-        weightsHiddenInput  = weightsHiddenInput.elementSubtract(weightsHiddenInput2.scale(Config.LEARNING_RATE));
+        weightsHiddenInput  = weightsHiddenInput.elementSubtract(weightsHiddenInput2.scale(Config.LEARNING_RATE))
+                                                .elementSubtract(weightsHiddenInput.scale(Config.LEARNING_RATE * Config.L2_LAMBDA));
         biasHidden = biasHidden.elementSubtract(biasHidden2.scale(Config.LEARNING_RATE));
     }
 
