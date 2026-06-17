@@ -17,6 +17,17 @@ public class NeuralNetwork {
     private Matrix lastInput;
     private Matrix lastHidden;
 
+    //getters and setters for model saver
+    public Matrix getWeightsHiddenInput()  { return weightsHiddenInput; }
+    public Matrix getWeightsHiddenOutput() { return weightsHiddenOutput; }
+    public Matrix getBiasHidden()          { return biasHidden; }
+    public Matrix getBiasOutput()          { return biasOutput; }
+
+    public void setWeightsHiddenInput(Matrix m)  { weightsHiddenInput = m; }
+    public void setWeightsHiddenOutput(Matrix m) { weightsHiddenOutput = m; }
+    public void setBiasHidden(Matrix m)          { biasHidden = m; }
+    public void setBiasOutput(Matrix m)          { biasOutput = m; }
+
     //initializes weights and biases randomly
     public NeuralNetwork(){
     weightsHiddenInput = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE);
