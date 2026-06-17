@@ -13,7 +13,8 @@ public class Training {
     public static void train(NeuralNetwork network, List<FeatureVector> trainingData, List<FeatureVector> testData) {
 
         double bestTestAccuracy = 0;
-        Matrix bestW1 = null, bestW2 = null, bestB1 = null, bestB2 = null;
+        Matrix bestW1 = null, bestW2 = null, bestW3 = null;
+        Matrix bestB1 = null, bestB2 = null, bestB3 = null;
 
         for (int epoch = 0; epoch < Config.EPOCHS; epoch++) {
 
@@ -52,10 +53,12 @@ public class Training {
 
                 if (testAccuracy > bestTestAccuracy) {
                     bestTestAccuracy = testAccuracy;
-                    bestW1 = network.getWeightsHiddenInput().copy();
-                    bestW2 = network.getWeightsHiddenOutput().copy();
-                    bestB1 = network.getBiasHidden().copy();
-                    bestB2 = network.getBiasOutput().copy();
+                    bestW1 = network.getWeightsInputHidden1().copy();
+                    bestW2 = network.getWeightsHidden1Hidden2().copy();
+                    bestW3 = network.getWeightsHidden2Output().copy();
+                    bestB1 = network.getBiasHidden1().copy();
+                    bestB2 = network.getBiasHidden2().copy();
+                    bestB3 = network.getBiasOutput().copy();
                 }
             } else {
                 System.out.printf("Epoch %d | Loss: %.4f | Train: %.2f%%%n",
@@ -65,10 +68,12 @@ public class Training {
 
         // restore the best version seen during training
         if (bestW1 != null) {
-            network.setWeightsHiddenInput(bestW1);
-            network.setWeightsHiddenOutput(bestW2);
-            network.setBiasHidden(bestB1);
-            network.setBiasOutput(bestB2);
+            network.setWeightsInputHidden1(bestW1);
+            network.setWeightsHidden1Hidden2(bestW2);
+            network.setWeightsHidden2Output(bestW3);
+            network.setBiasHidden1(bestB1);
+            network.setBiasHidden2(bestB2);
+            network.setBiasOutput(bestB3);
             System.out.printf("%nRestored best model — test accuracy was %.2f%%%n", bestTestAccuracy * 100);
         }
     }
