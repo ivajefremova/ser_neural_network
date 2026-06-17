@@ -33,7 +33,7 @@ public class FeatureNormalizer {
     public double[] normalize(double[] features){
         double[] normFeatures = new double[features.length];
         for (int i = 0; i < features.length; i++) {
-            normFeatures[i] = (features[i] - means[i]) / stds[i];
+            normFeatures[i] = stds[i] == 0 ? 0 : (features[i] - means[i]) / stds[i];
         }
         return normFeatures;
     }
