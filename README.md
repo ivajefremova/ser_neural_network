@@ -38,7 +38,7 @@ Raw audio samples are not useful for a neural network directly — there are too
 The feature vector is passed through a feedforward neural network with three layers:
 
 ```
-Input layer      →   40 neurons   (one per MFCC feature)
+Input layer      →   26 neurons   (one per MFCC feature)
 Hidden layer     →   64 neurons   (learns patterns)
 Output layer     →    6 neurons   (one per emotion)
 ```
@@ -113,7 +113,6 @@ Runs the trained network on the test split of the dataset and reports accuracy p
 
 | Tool | Purpose |
 |---|---|
-| Java 17 | primary language |
 | Maven | dependency management and build |
 | IntelliJ IDEA | IDE |
 | GitHub | version control and collaboration |
@@ -122,13 +121,6 @@ Runs the trained network on the test split of the dataset and reports accuracy p
 No machine learning libraries (e.g. Deeplearning4j) are used. All math is implemented from scratch.
 
 ---
-
-## Build and Run
-
-### Prerequisites
-- Java 17 or higher
-- Maven
-- IntelliJ IDEA (recommended)
 
 ### Setup
 ```bash
