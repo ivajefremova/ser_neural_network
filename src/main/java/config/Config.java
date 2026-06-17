@@ -14,7 +14,7 @@ public class Config {
 
     // training settings
     public static final double LEARNING_RATE = 0.003;
-    public static final int EPOCHS = 250;
+    public static final int EPOCHS = 400;
 
     // data split
     public static final double TRAIN_SPLIT = 0.8;   // 80% training, 20% testing

@@ -3,14 +3,6 @@ package network;
 import config.Config;
 import math.Matrix;
 
-// inputMatrix          [1 × 31]   — one row, 31 features
-// weightsInputHidden1  [31 × 64]  — connects every input to every neuron in hidden layer 1
-// biasHidden1          [1 × 64]   — one bias per neuron in hidden layer 1
-// weightsHidden1Hidden2[64 × 32]  — connects every neuron in hidden layer 1 to hidden layer 2
-// biasHidden2          [1 × 32]   — one bias per neuron in hidden layer 2
-// weightsHidden2Output [32 × 6]   — connects every neuron in hidden layer 2 to every emotion
-// biasOutput           [1 × 6]    — one bias per emotion output
-
 public class NeuralNetwork {
     private Matrix weightsInputHidden1;
     private Matrix weightsHidden1Hidden2;
@@ -37,25 +29,26 @@ public class NeuralNetwork {
     public void setBiasHidden2(Matrix m)           { biasHidden2 = m; }
     public void setBiasOutput(Matrix m)            { biasOutput = m; }
 
-    //initializes weights and biases randomly
+    //initializes weights with Xavier init: range = sqrt(6 / (fan_in + fan_out))
+    //keeps gradients from shrinking across tanh layers; biases start at 0
     public NeuralNetwork() {
+        double xavierL1 = Math.sqrt(6.0 / (Config.INPUT_SIZE    + Config.HIDDEN_SIZE_1));
+        double xavierL2 = Math.sqrt(6.0 / (Config.HIDDEN_SIZE_1 + Config.HIDDEN_SIZE_2));
+        double xavierOut = Math.sqrt(6.0 / (Config.HIDDEN_SIZE_2 + Config.OUTPUT_SIZE));
+
         weightsInputHidden1 = new Matrix(Config.INPUT_SIZE, Config.HIDDEN_SIZE_1);
-        weightsInputHidden1.randomize(-0.5, 0.5);
+        weightsInputHidden1.randomize(-xavierL1, xavierL1);
 
         weightsHidden1Hidden2 = new Matrix(Config.HIDDEN_SIZE_1, Config.HIDDEN_SIZE_2);
-        weightsHidden1Hidden2.randomize(-0.5, 0.5);
+        weightsHidden1Hidden2.randomize(-xavierL2, xavierL2);
 
         weightsHidden2Output = new Matrix(Config.HIDDEN_SIZE_2, Config.OUTPUT_SIZE);
-        weightsHidden2Output.randomize(-0.5, 0.5);
+        weightsHidden2Output.randomize(-xavierOut, xavierOut);
 
         biasHidden1 = new Matrix(1, Config.HIDDEN_SIZE_1);
-        biasHidden1.randomize(-0.5, 0.5);
-
         biasHidden2 = new Matrix(1, Config.HIDDEN_SIZE_2);
-        biasHidden2.randomize(-0.5, 0.5);
-
-        biasOutput = new Matrix(1, Config.OUTPUT_SIZE);
-        biasOutput.randomize(-0.5, 0.5);
+        biasOutput  = new Matrix(1, Config.OUTPUT_SIZE);
+        // biases left as zero — standard with Xavier init
     }
 
     //returns output layer of neural network
