@@ -5,7 +5,7 @@ public enum Emotion {
     SAD,
     ANGRY,
     DISGUST,
-    FEAR,
+    FEARFUL,
     NEUTRAL;
 
     public String getLabel() {
