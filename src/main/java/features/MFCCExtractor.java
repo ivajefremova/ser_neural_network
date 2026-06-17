@@ -12,9 +12,17 @@ import org.apache.commons.math3.transform.FastCosineTransformer;
 import org.apache.commons.math3.transform.DctNormalization;
 import java.util.Arrays;
 
+//WAV files - essentially a long list of numbers that represent air pressure over time
+
+// At 16,000 Hz -sample rate it records 16,000 numbers per second. A 3-second clip = 48,000 numbers.
+// Each number is stored as a 16-bit integer, meaning it can be anywhere from -32,768 to +32,767.
+// Negative = air pressure below baseline, positive = above. Zero = silence.
+// The raw file bytes look like:
+//  ... 0x00 0x1A  0x00 0x2F  0xFF 0xE1 ...
+//  Each pair of bytes is one sample — one snapshot of the waveform.
+
 public class MFCCExtractor {
 
-    private static final int SAMPLE_RATE = 16000;
     private static final int FRAME_SIZE = 512;
     private static final int HOP_SIZE = 256;
     private static final int NUM_FILTERS = 33;
@@ -25,28 +33,32 @@ public class MFCCExtractor {
 
     private static double hzToMel(double hz) {
         return 2595 * Math.log10(1 + hz / 700.0);
-    }
+    }   //from herz to Melofdy math
 
     private static double melToHz(double mel) {
         return 700 * (Math.pow(10, mel / 2595.0) - 1);
-    }
+    }   //mel to herz
 
+    //makes an array of representations of waveform from the bytestream of the audio -1 to 1
     public static double[] readWAV(String filePath) throws Exception{
         File file = new File(filePath);
-        AudioInputStream ais = AudioSystem.getAudioInputStream(file);
+        AudioInputStream ais = AudioSystem.getAudioInputStream(file);   //part of AudioSystem class in java , gets a stream if bytes
 
-        byte[] buffer = ais.readAllBytes();
-        double[] samples = new double[buffer.length / 2];
+        byte[] buffer = ais.readAllBytes();     //reads the remaining bytes
+        double[] samples = new double[buffer.length / 2];   //list of doubles of remaining bytes /2
 
+        //every 2 bytes = one audio sample - 1 integer
+        //shifting to get the number where it should be
         for (int i = 0; i < buffer.length; i += 2) {
             int sample = (buffer[i+1] << 8) | (buffer[i] & 0xFF);
             samples[i/2] = sample / 32768.0;
         }
 
         ais.close();
-        return samples;
+        return samples;    //array of elements that represent a waveform at a time from -1 to 1
     }
 
+    //chops that long samples array into small overlapping chunks frames
     private static double[][] frameSignal(double[] samples){
         int numFrames = (samples.length - FRAME_SIZE) / HOP_SIZE + 1;
         double[][] frames = new double[numFrames][FRAME_SIZE];
@@ -54,9 +66,10 @@ public class MFCCExtractor {
             int start = i * HOP_SIZE;
             System.arraycopy(samples, start, frames[i], 0, FRAME_SIZE);
         }
-        return frames;
+        return frames;      //2D array frames[numFrames][frame size]
     }
 
+    // it multiplies each frame by a bell-shaped curve that smoothly fades to near-zero at both edges
     private static void applyHammingWindow(double[] frame){
         int N = frame.length;
         for (int n = 0; n < N; n++){
@@ -82,7 +95,7 @@ public class MFCCExtractor {
         double[] filterbank = new double[numFilters];
 
         double melMin = hzToMel(0);
-        double melMax = hzToMel(SAMPLE_RATE / 2.0);
+        double melMax = hzToMel(Config.SAMPLE_RATE / 2.0);
 
         double[] melPoints = new double[numFilters + 2];
         for (int i = 0; i < melPoints.length; i++) {
@@ -92,7 +105,7 @@ public class MFCCExtractor {
         int[] bins = new int[numFilters + 2];
         for (int i = 0; i < melPoints.length; i++) {
             double hz = melToHz(melPoints[i]);
-            bins[i] = (int)((FRAME_SIZE + 1) * hz / SAMPLE_RATE);
+            bins[i] = (int)((FRAME_SIZE + 1) * hz / Config.SAMPLE_RATE);
         }
 
         for (int m = 1; m <= numFilters; m++) {
@@ -120,7 +133,7 @@ public class MFCCExtractor {
         return Arrays.copyOfRange(result, 0, NUM_COEFFS);
     }
 
-    // ===== NEW: energy of one frame =====
+    // energy of one frame
     private static double computeFrameEnergy(double[] frame) {
         double sum = 0;
         for (double v : frame) {
@@ -129,10 +142,10 @@ public class MFCCExtractor {
         return sum / frame.length;
     }
 
-    // ===== NEW: pitch estimate of one frame via autocorrelation =====
+    // pitch estimate of one frame via autocorrelation
     private static double estimatePitch(double[] frame) {
-        int minLag = SAMPLE_RATE / MAX_PITCH_HZ;
-        int maxLag = SAMPLE_RATE / MIN_PITCH_HZ;
+        int minLag = Config.SAMPLE_RATE / MAX_PITCH_HZ;
+        int maxLag = Config.SAMPLE_RATE / MIN_PITCH_HZ;
 
         double bestCorrelation = -1;
         int bestLag = minLag;
@@ -147,10 +160,10 @@ public class MFCCExtractor {
                 bestLag = lag;
             }
         }
-        return (double) SAMPLE_RATE / bestLag;
+        return (double) Config.SAMPLE_RATE / bestLag;
     }
 
-    // ===== NEW: zero crossing rate over the whole file =====
+    // zero crossing rate over the whole file
     private static double computeZCR(double[] samples) {
         int crossings = 0;
         for (int i = 1; i < samples.length; i++) {

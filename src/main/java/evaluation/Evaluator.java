@@ -14,18 +14,18 @@ public class Evaluator {
         int total = testData.size();
         int correct = 0;
 
-        int[] correctPerEmotion = new int[Emotion.values().length];
-        int[] totalPerEmotion = new int[Emotion.values().length];
+        int[] correctPerEmotion = new int[Emotion.values().length];     //array of ints of the enum values
+        int[] totalPerEmotion = new int[Emotion.values().length];      //same but will have diff purpose
 
         for (FeatureVector fv : testData) {
-            Matrix input = toMatrix(fv.getFeatures());
-            int predicted = nn.predict(input);
-            int actual = fv.getLabel().ordinal();
+            Matrix input = toMatrix(fv.getFeatures());        //convert vector/list from audio into a matrix
+            int predicted = nn.predict(input);        //predicted emotion
+            int actual = fv.getLabel().ordinal();        //getLabel getter from feature vector gets actual emotion
 
-            totalPerEmotion[actual]++;
+            totalPerEmotion[actual]++;         //increments the value in the array at the index of that emotions enum
             if (predicted == actual) {
                 correct++;
-                correctPerEmotion[actual]++;
+                correctPerEmotion[actual]++;      //increments the correctness of that emotion in the list if its predicted correctly
             }
         }
 
@@ -35,8 +35,8 @@ public class Evaluator {
         for (Emotion e : Emotion.values()) {
             int i = e.ordinal();
             double acc = totalPerEmotion[i] == 0 ? 0 : 100.0 * correctPerEmotion[i] / totalPerEmotion[i];
-            System.out.printf("  %-10s: %.1f%%  (%d/%d)%n", e.name(), acc, correctPerEmotion[i], totalPerEmotion[i]);
-        }
+            System.out.printf("  %-10s: %.1f%%  (%d/%d)%n", e.name(), acc, correctPerEmotion[i], totalPerEmotion[i]);  //%% means literal % sign
+        }                                               //%d whole number (integer), %n is neewline
     }
 
     //private helper that converts double[] to a Matrix [1×26] network

@@ -3,6 +3,7 @@ package audio;
 //splits the data into two sets (training and testing) in 80:20 proportion, and returns those
 //in a way that the same voice actor will never appear in both
 
+import config.Config;
 import java.io.File;
 import java.util.*;
 //The * is a wildcard import — it imports everything from the java.util package at once instead of listing separately.
@@ -23,7 +24,7 @@ public class DatasetSplitter {
         }
         Collections.shuffle(actorList);    //method from util* to mix the actor list
 
-        int splitPoint = (int)(actorList.size() * 0.8);             //the split 80 for training 20 for testing
+        int splitPoint = (int)(actorList.size() * Config.TRAIN_SPLIT);             //the split 80 for training 20 for testing
 
         Set<String> trainActors = new HashSet<>(actorList.subList(0, splitPoint));      //sublist and set are from list interface, sublist gets the sublist until the spliypoint
         Set<String> testActors  = new HashSet<>(actorList.subList(splitPoint, actorList.size()));
