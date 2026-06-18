@@ -78,18 +78,25 @@ public class MFCCExtractor {
         }
     }
 
+    //
     private static double[] computePowerSpectrum(double[] frame){
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-        Complex[] spectrum = fft.transform(frame, TransformType.FORWARD);
-        double[] res = new double[FRAME_SIZE/2];
+        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);  //library class from Apache Commons Math
+        Complex[] spectrum = fft.transform(frame, TransformType.FORWARD);      //spectrum is complex transformed array with complex numbers
+        //hand it audio samples, it hands back complex numbers representing frequencies.
+        //the math behind it ( Fourier Transform algorithm) is handled entirely inside the library.
+        double[] res = new double[FRAME_SIZE/2];   //Only the first half is kept. The FFT of a real signal is always symmetric,  bins 256–511 are a mirror of bins 0–255,
         for (int i = 0; i < FRAME_SIZE/2; i++){
             double real = spectrum[i].getReal();
             double imag = spectrum[i].getImaginary();
             res[i] = (real * real) + (imag * imag);
         }
-        return res;
+        return res;    //arraty of (real * real) + (imag * imag) of every complex number in half spectrum array
     }
 
+    // The power spectrum has 256 frequency bins spaced evenly — every 31 Hz.
+    // human hearing doesn't work that way - very sensitive to differences in low frequencies
+    // but bad at distinguishing high frequencies-500 Hz and 600 Hz sound more similar
+    // mel scale mimics this — it squishes the high frequencies and spreads out the low ones - to match how humans hear
     private static double[] applyMelFilterbank(double[] powerSpectrum){
         int numFilters = NUM_FILTERS;
         double[] filterbank = new double[numFilters];
@@ -101,7 +108,7 @@ public class MFCCExtractor {
         for (int i = 0; i < melPoints.length; i++) {
             melPoints[i] = melMin + i * (melMax - melMin) / (numFilters + 1);
         }
-
+        // convert those points back to Hz, then to FFT bin indices
         int[] bins = new int[numFilters + 2];
         for (int i = 0; i < melPoints.length; i++) {
             double hz = melToHz(melPoints[i]);
@@ -116,17 +123,22 @@ public class MFCCExtractor {
                 filterbank[m-1] += powerSpectrum[k] * (double)(bins[m+1] - k) / (bins[m+1] - bins[m]);
             }
         }
-        return filterbank;
+        return filterbank; //array of 33 numbers — each is the total energy in one mel-frequency band.
     }
 
+    //human hearing doesn't perceive loudness linearly either-logarithmically
+    //  loud:  [5000, 12000, 800]  →  [8.5,  9.4,  6.7]
+    //  quiet: [0.5,  1.2,  0.08]  →  [−0.7, 0.2, −2.5]
+    //  The values are now in a much tighter, more manageable range. The network can handle these numbers much more easily than values spanning from 0.001 to 50,000.
     private static double[] applyLog(double[] filterbank) {
         double[] result = new double[filterbank.length];
         for (int i = 0; i < filterbank.length; i++) {
             result[i] = Math.log(filterbank[i] + 1e-10);
         }
-        return result;
+        return result;    //array of log + 1e-10 of the filterbank, 33 numbers representing energy in 33 mel bands
     }
 
+    //
     private static double[] applyDCT(double[] logFilterbank) {
         FastCosineTransformer dct = new FastCosineTransformer(DctNormalization.STANDARD_DCT_I);
         double[] result = dct.transform(logFilterbank, TransformType.FORWARD);
@@ -137,9 +149,9 @@ public class MFCCExtractor {
     private static double computeFrameEnergy(double[] frame) {
         double sum = 0;
         for (double v : frame) {
-            sum += v * v;
+            sum += v * v;    //squaring does two things: makes all values positive (a negative sample is still energy), and emphasizes louder samples more
         }
-        return sum / frame.length;
+        return sum / frame.length;  //average energy per sample so frames of different lengths would be comparable
     }
 
     // pitch estimate of one frame via autocorrelation
@@ -150,6 +162,9 @@ public class MFCCExtractor {
         double bestCorrelation = -1;
         int bestLag = minLag;
 
+        //if a signal repeats every N samples, then shifting it by N and multiplying it with
+        // the original gives a big number — they line up. Shift by the wrong
+        //  amount and they cancel out - autocorrelation.
         for (int lag = minLag; lag <= maxLag && lag < frame.length; lag++) {
             double correlation = 0;
             for (int n = 0; n < frame.length - lag; n++) {
@@ -160,32 +175,38 @@ public class MFCCExtractor {
                 bestLag = lag;
             }
         }
+        //If the best lag is 80 samples:
+        // 16000 / 80 = 200 Hz  ←  estimated pitch of this frame
         return (double) Config.SAMPLE_RATE / bestLag;
     }
 
-    // zero crossing rate over the whole file
+    // zero crossing rate over the whole file - if the sound is smooth or no, zero crossing means from negative to pos values in our array
+    //neutral and sad speech tends to be smoother, fearful and disgusted speech often breathier — so ZCR adds a signal the MFCCs alone don't fully capture.
     private static double computeZCR(double[] samples) {
         int crossings = 0;
         for (int i = 1; i < samples.length; i++) {
-            boolean signChanged = (samples[i] >= 0 && samples[i-1] < 0) ||
-                    (samples[i] < 0 && samples[i-1] >= 0);
+            boolean signChanged = (samples[i] >= 0 && samples[i-1] < 0) || (samples[i] < 0 && samples[i-1] >= 0);
             if (signChanged) crossings++;
         }
-        return (double) crossings / samples.length;
+        return (double) crossings / samples.length;        //average amount of crossings
     }
 
+    //computes average noth spec
     private static double average(double[] values) {
         double sum = 0;
         for (double v : values) sum += v;
         return sum / values.length;
     }
 
+    //small std dev = pitch barely moved (monotone, flat — think sad/neutral).
+    //large std dev = pitch jumped around a lot (expressive — think angry/happy).
     private static double stdDev(double[] values, double mean) {
         double variance = 0;
-        for (double v : values) variance += Math.pow(v - mean, 2);
+        for (double v : values) variance += Math.pow(v - mean, 2);   // for each value, find how far it is from the mean and square it
         return Math.sqrt(variance / values.length);
     }
 
+    //calls all the other methods in order and assembles the final 31-value feature vector
     public static double[] extract(String filePath) throws Exception {
         double[] rwav = readWAV(filePath);
         double[][] frames = frameSignal(rwav);
@@ -194,6 +215,7 @@ public class MFCCExtractor {
         double[] frameEnergies = new double[frames.length];
         double[] framePitches = new double[frames.length];
 
+        //process each frame
         for (int i = 0; i < frames.length; i++) {
             // measure on the RAW frame before windowing changes it
             frameEnergies[i] = computeFrameEnergy(frames[i]);
@@ -235,9 +257,18 @@ public class MFCCExtractor {
         // zero crossing rate (1 value)
         result[30] = zcr;
 
-        return result;
+        return result; //final array passed to neural  network and feature vector
     }
+    // [0–12]  MFCC means
+    //  [13–25] MFCC std devs
+    //  [26]    energy mean
+    //  [27]    energy std dev
+    //  [28]    pitch mean
+    //  [29]    pitch std dev
+    //  [30]    ZCR
 
+
+    //test for a file
     public static void main(String[] args) throws Exception {
         String testFile = "/Users/oskar/Documents/NeuroNetProject/Data/AudioWAV/1001_DFA_ANG_XX.wav";
         double[] vector = extract(testFile);
