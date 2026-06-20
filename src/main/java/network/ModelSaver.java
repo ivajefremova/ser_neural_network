@@ -12,28 +12,30 @@ public class ModelSaver {
         Files.createDirectories(Paths.get(path).getParent());
         BufferedWriter writer = new BufferedWriter(new FileWriter(path));
 
-        writeMatrix(writer, "weightsHiddenInput",  nn.getWeightsHiddenInput());
-        writeMatrix(writer, "weightsHiddenOutput", nn.getWeightsHiddenOutput());
-        writeMatrix(writer, "biasHidden", nn.getBiasHidden());
-        writeMatrix(writer, "biasOutput", nn.getBiasOutput());
+        writeMatrix(writer, "weightsInputHidden1",   nn.getWeightsInputHidden1());
+        writeMatrix(writer, "weightsHidden1Hidden2", nn.getWeightsHidden1Hidden2());
+        writeMatrix(writer, "weightsHidden2Output",  nn.getWeightsHidden2Output());
+        writeMatrix(writer, "biasHidden1",           nn.getBiasHidden1());
+        writeMatrix(writer, "biasHidden2",           nn.getBiasHidden2());
+        writeMatrix(writer, "biasOutput",            nn.getBiasOutput());
 
         writer.close();
     }
-
 
     public static NeuralNetwork load(String path) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(path));
         NeuralNetwork nn = new NeuralNetwork();
 
-        nn.setWeightsHiddenInput(readMatrix(reader));
-        nn.setWeightsHiddenOutput(readMatrix(reader));
-        nn.setBiasHidden(readMatrix(reader));
+        nn.setWeightsInputHidden1(readMatrix(reader));
+        nn.setWeightsHidden1Hidden2(readMatrix(reader));
+        nn.setWeightsHidden2Output(readMatrix(reader));
+        nn.setBiasHidden1(readMatrix(reader));
+        nn.setBiasHidden2(readMatrix(reader));
         nn.setBiasOutput(readMatrix(reader));
 
         reader.close();
         return nn;
     }
-
 
     private static void writeMatrix(BufferedWriter writer, String label, Matrix m) throws IOException {
         writer.write(label + " " + m.getRows() + " " + m.getCols());

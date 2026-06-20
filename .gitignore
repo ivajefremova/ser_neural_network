@@ -40,3 +40,6 @@ build/
 
 ### Private Notes ###
 NOTES.md
+
+### Audio Data ###
+*.wav

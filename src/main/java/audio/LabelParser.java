@@ -2,12 +2,11 @@ package audio;
 
 import config.Emotion;
 
-//Identifies an emotion from the file's name
+//identifies an emotion from the file's name
 
 public class LabelParser {
     public static Emotion parse(String filename){
-        String regex = "[_]";
-        String[] myArray = filename.split(regex);
+        String[] myArray = filename.split("_");
         String emotionCode = myArray[2];
         switch(emotionCode) {
             case "ANG": return Emotion.ANGRY;
@@ -19,6 +18,8 @@ public class LabelParser {
             default: return null; // unknown code
         }
     }
+
+    //just tests if it works
     public static void main(String[] args){
         System.out.println(parse("1001_DFA_ANG_XX.wav"));
         System.out.println(parse("1002_IEO_HAP_HI.wav"));
