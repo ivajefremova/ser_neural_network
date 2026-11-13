@@ -16,6 +16,10 @@ The program takes an audio file as input, extracts numerical features from the s
 - Neutral
 - Sad
 
+## Performance
+
+It performed with around 50 % accuracy. This is around the same accuracy a human achieves when trying to decipher an emotion solely from an audio, without a combined video. We even did a few tests where both the neural network guesses and the human, getting similar results.
+
 ---
 
 ## Dataset
